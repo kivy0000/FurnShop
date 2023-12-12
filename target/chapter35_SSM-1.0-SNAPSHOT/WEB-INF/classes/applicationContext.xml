@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--suppress SpringFacetInspection --> <!-- 禁止检查 -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+
+    <!--    spring不接管controller注解，已交给springmvc,其余按默认配置扫描-->
+    <context:component-scan base-package="com.kfhstu.furn">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+
+    <!--    读取外部数据库配置文件    -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <!--    配置数据源/数据库连接池    -->
+
+    <bean id="druidDataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${driverClassName}"/>
+        <property name="url" value="${url}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+    </bean>
+
+
+    <!--mybatis整合spring的配置    -->
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean" id="sqlSessionFactory">
+        <!-- 配置mybatis全局的配置文件-->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <!--配置数据源-->
+        <property name="dataSource" ref="druidDataSource"/>
+        <!--配置要管理的mapper.xml文件的位置（因为整合spring了） -->
+        <property name="mapperLocations" value="classpath:mapper/*.xml"/>
+    </bean>
+
+    <!--配置扫描器，将所有mybatis相关的mapper接口的实现放入ioc容器中，mapper的接口放置在dao包中    -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.kfhstu.furn.dao"/>
+    </bean>
+
+    <!--配置事务管理器    -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="druidDataSource"/>
+    </bean>
+
+    <!--事务管理的位置:切入点表达式，以及增强规则    -->
+    <aop:config>
+        <!-- 切入点表达式-->
+        <aop:pointcut id="txPoint" expression="execution(* com.kfhstu.furn.service..*(..))"/>
+        <!--事务增强配置-->
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="txPoint"/>
+    </aop:config>
+
+    <!--事务增强逻辑    -->
+    <tx:advice id="txAdvice">
+        <tx:attributes>
+            <!--      该包以及其子包下都是事务方法      -->
+            <tx:method name="*"/>
+            <!--      get方法只读，提高性能      -->
+            <tx:method name="get*" read-only="true"/>
+        </tx:attributes>
+
+    </tx:advice>
+
+
+</beans>
