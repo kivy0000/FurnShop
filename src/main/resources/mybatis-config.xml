@@ -5,14 +5,6 @@
 
 
 <configuration>
-    <!--配置的时候要按顺序。常用的如下
-    1.properties–>用于引入配置文件如
-    2.settings–>各种配置比如映射下划线到驼峰命名、延迟加载
-    3.–typeAliases>别名处理
-    4.environment–>也就是连接数据库的具体信息
-    5.mappers–>映射文件
-    -->
-
     <!--  配置自带的日志  -->
     <settings>
         <setting name="logImpl" value="STDOUT_LOGGING"/>
